@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Feedback Analysis System</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f4f5f7;
+      color: #1a1a1a;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e4e9;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    header h1 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #111;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    header h1 i { font-size: 20px; color: #378ADD; }
+
+    .badge {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      background: #E1F5EE;
+      color: #085041;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+
+    .filter-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-row select {
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid #d0d4dc;
+      background: #fff;
+      color: #1a1a1a;
+      cursor: pointer;
+      outline: none;
+    }
+
+    .filter-row select:focus { border-color: #378ADD; }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .metric {
+      background: #fff;
+      border-radius: 10px;
+      padding: 14px 16px;
+      border: 1px solid #e2e4e9;
+    }
+
+    .metric .lbl { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+    .metric .val { font-size: 24px; font-weight: 600; color: #111; }
+    .metric .sub { font-size: 11px; color: #9ca3af; margin-top: 3px; }
+    .metric .val.danger { color: #E24B4A; }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    @media (max-width: 620px) { .grid2 { grid-template-columns: 1fr; } }
+
+    .card {
+      background: #fff;
+      border: 1px solid #e2e4e9;
+      border-radius: 12px;
+      padding: 16px 18px;
+    }
+
+    .card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 14px;
+    }
+
+    .chart-wrap { position: relative; width: 100%; }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .legend span { display: flex; align-items: center; gap: 5px; }
+    .legend-box { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+
+    .lifecycle {
+      display: flex;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #e2e4e9;
+    }
+
+    .lc-step {
+      flex: 1;
+      text-align: center;
+      padding: 12px 4px;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+      border-right: 1px solid rgba(0,0,0,.06);
+    }
+
+    .lc-step:last-child { border-right: none; }
+    .lc-step:hover { opacity: .85; transform: translateY(-1px); }
+    .lc-step .icon { font-size: 20px; margin-bottom: 4px; }
+    .lc-step .name { font-size: 11px; font-weight: 600; }
+    .lc-step .pct { font-size: 11px; margin-top: 2px; }
+
+    .table-wrap { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      font-weight: 600;
+      font-size: 11px;
+      color: #6b7280;
+      border-bottom: 1px solid #e2e4e9;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    td { padding: 9px 10px; border-bottom: 1px solid #f0f1f3; color: #1a1a1a; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #fafafa; }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 9px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .tag-r { background: #FCEBEB; color: #A32D2D; }
+    .tag-y { background: #FAEEDA; color: #633806; }
+    .tag-g { background: #E1F5EE; color: #085041; }
+
+    .insights { display: flex; flex-direction: column; gap: 10px; }
+
+    .insight {
+      border-left: 3px solid;
+      padding: 10px 14px;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .insight.good { border-color: #1D9E75; background: #f0fdf8; }
+    .insight.warn { border-color: #BA7517; background: #fffbf0; }
+    .insight.bad  { border-color: #E24B4A; background: #fff5f5; }
+
+    .insight .ititle {
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 3px;
+    }
+
+    .insight.good .ititle { color: #085041; }
+    .insight.warn .ititle { color: #633806; }
+    .insight.bad  .ititle { color: #7f1d1d; }
+
+    .insight p { font-size: 12px; line-height: 1.6; }
+    .insight.good p { color: #0F6E56; }
+    .insight.warn p { color: #854F0B; }
+    .insight.bad  p { color: #A32D2D; }
+
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: #9ca3af;
+      border-top: 1px solid #e2e4e9;
+      margin-top: 24px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><i class="ti ti-chart-bar"></i> Customer Feedback Analysis System</h1>
+  <span class="badge"><i class="ti ti-circle-check"></i> BPO Operations Dashboard</span>
+</header>
+
+<div class="container">
+
+  <div class="filter-row">
+    <select id="monthFilter" onchange="updateCharts()">
+      <option value="all">All months</option>
+      <option value="0">January</option>
+      <option value="1">February</option>
+      <option value="2">March</option>
+      <option value="3">April</option>
+      <option value="4">May</option>
+      <option value="5">June</option>
+    </select>
+    <select id="channelFilter" onchange="updateCharts()">
+      <option value="all">All channels</option>
+      <option value="Voice">Voice</option>
+      <option value="Chat">Chat</option>
+      <option value="Email">Email</option>
+    </select>
+  </div>
+
+  <div class="metrics">
+    <div class="metric">
+      <div class="lbl">CSAT Score</div>
+      <div class="val" id="m-csat">82%</div>
+      <div class="sub">↑ 3% vs last month</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Total Feedback</div>
+      <div class="val" id="m-total">1,248</div>
+      <div class="sub">This period</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Avg Handle Time</div>
+      <div class="val" id="m-aht">4.2m</div>
+      <div class="sub">Target: &lt;5 min</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">First Call Res.</div>
+      <div class="val" id="m-fcr">74%</div>
+      <div class="sub">↑ 5% vs last month</div>
+    </div>
+    <div class="metric">
+      <div class="lbl">Open Complaints</div>
+      <div class="val danger" id="m-open">38</div>
+      <div class="sub">↓ 12 resolved today</div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Satisfaction trend</div>
+      <div class="legend">
+        <span><span class="legend-box" style="background:#378ADD"></span>CSAT %</span>
+        <span><span class="legend-box" style="background:transparent;border:1.5px dashed #1D9E75"></span>Target (80%)</span>
+      </div>
+      <div class="chart-wrap" style="height:210px">
+        <canvas id="csatChart" role="img" aria-label="Line chart showing CSAT trend from January to June, ranging from 74% to 85%">CSAT trend: Jan 74%, Feb 76%, Mar 79%, Apr 82%, May 80%, Jun 85%.</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Feedback by category</div>
+      <div class="legend">
+        <span><span class="legend-box" style="background:#378ADD"></span>Billing 28%</span>
+        <span><span class="legend-box" style="background:#1D9E75"></span>Tech Support 22%</span>
+        <span><span class="legend-box" style="background:#BA7517"></span>Delivery 19%</span>
+        <span><span class="legend-box" style="background:#E24B4A"></span>Returns 16%</span>
+        <span><span class="legend-box" style="background:#7F77DD"></span>Other 15%</span>
+      </div>
+      <div class="chart-wrap" style="height:210px">
+        <canvas id="catChart" role="img" aria-label="Doughnut chart: Billing 28%, Tech Support 22%, Delivery 19%, Returns 16%, Other 15%">Billing 28%, Tech Support 22%, Delivery 19%, Returns 16%, Other 15%.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2">
+    <div class="card">
+      <div class="card-title">Complaint volume by channel</div>
+      <div class="legend">
+        <span><span class="legend-box" style="background:#378ADD"></span>Voice</span>
+        <span><span class="legend-box" style="background:#7F77DD"></span>Chat</span>
+        <span><span class="legend-box" style="background:#1D9E75"></span>Email</span>
+      </div>
+      <div class="chart-wrap" style="height:210px">
+        <canvas id="channelChart" role="img" aria-label="Stacked bar chart of complaint volume by Voice, Chat, and Email across 6 months">Monthly complaint volumes across Voice, Chat, Email channels.</canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Resolution time distribution</div>
+      <div class="legend">
+        <span><span class="legend-box" style="background:#1D9E75"></span>&lt;1 hr: 38%</span>
+        <span><span class="legend-box" style="background:#378ADD"></span>1–4 hr: 31%</span>
+        <span><span class="legend-box" style="background:#BA7517"></span>4–24 hr: 21%</span>
+        <span><span class="legend-box" style="background:#E24B4A"></span>&gt;24 hr: 10%</span>
+      </div>
+      <div class="chart-wrap" style="height:210px">
+        <canvas id="resChart" role="img" aria-label="Pie chart: under 1hr 38%, 1-4hr 31%, 4-24hr 21%, over 24hr 10%">Under 1hr 38%, 1-4hr 31%, 4-24hr 21%, over 24hr 10%.</canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Customer lifecycle — satisfaction by stage (click any stage for tips)</div>
+    <div class="lifecycle">
+      <div class="lc-step" style="background:#E6F1FB" onclick="lcClick(0)">
+        <div class="icon" style="color:#185FA5"><i class="ti ti-user-plus"></i></div>
+        <div class="name" style="color:#0C447C">Onboarding</div>
+        <div class="pct" style="color:#185FA5">88%</div>
+      </div>
+      <div class="lc-step" style="background:#E1F5EE" onclick="lcClick(1)">
+        <div class="icon" style="color:#0F6E56"><i class="ti ti-shopping-cart"></i></div>
+        <div class="name" style="color:#085041">Purchase</div>
+        <div class="pct" style="color:#0F6E56">83%</div>
+      </div>
+      <div class="lc-step" style="background:#FAEEDA" onclick="lcClick(2)">
+        <div class="icon" style="color:#854F0B"><i class="ti ti-headset"></i></div>
+        <div class="name" style="color:#633806">Support</div>
+        <div class="pct" style="color:#854F0B">71%</div>
+      </div>
+      <div class="lc-step" style="background:#FCEBEB" onclick="lcClick(3)">
+        <div class="icon" style="color:#A32D2D"><i class="ti ti-alert-circle"></i></div>
+        <div class="name" style="color:#791F1F">Complaint</div>
+        <div class="pct" style="color:#A32D2D">54%</div>
+      </div>
+      <div class="lc-step" style="background:#E1F5EE" onclick="lcClick(4)">
+        <div class="icon" style="color:#0F6E56"><i class="ti ti-refresh"></i></div>
+        <div class="name" style="color:#085041">Retention</div>
+        <div class="pct" style="color:#0F6E56">79%</div>
+      </div>
+      <div class="lc-step" style="background:#E6F1FB" onclick="lcClick(5)">
+        <div class="icon" style="color:#185FA5"><i class="ti ti-star"></i></div>
+        <div class="name" style="color:#0C447C">Loyalty</div>
+        <div class="pct" style="color:#185FA5">91%</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Recent complaints log</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Ticket #</th>
+            <th>Customer</th>
+            <th>Issue</th>
+            <th>Channel</th>
+            <th>Status</th>
+            <th>CSAT</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>C-1041</td><td>Ramesh K.</td><td>Billing error — overcharge</td><td>Voice</td><td><span class="tag tag-r">Open</span></td><td>2 / 5</td></tr>
+          <tr><td>C-1040</td><td>Priya M.</td><td>Delayed delivery</td><td>Chat</td><td><span class="tag tag-y">Pending</span></td><td>3 / 5</td></tr>
+          <tr><td>C-1039</td><td>Arjun S.</td><td>App not loading</td><td>Chat</td><td><span class="tag tag-g">Resolved</span></td><td>5 / 5</td></tr>
+          <tr><td>C-1038</td><td>Divya R.</td><td>Refund not processed</td><td>Email</td><td><span class="tag tag-r">Open</span></td><td>1 / 5</td></tr>
+          <tr><td>C-1037</td><td>Suresh P.</td><td>Wrong item delivered</td><td>Voice</td><td><span class="tag tag-g">Resolved</span></td><td>4 / 5</td></tr>
+          <tr><td>C-1036</td><td>Anita V.</td><td>Password reset issue</td><td>Chat</td><td><span class="tag tag-g">Resolved</span></td><td>5 / 5</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:14px">
+    <div class="card-title">Actionable insights</div>
+    <div class="insights">
+      <div class="insight good">
+        <div class="ititle"><i class="ti ti-trending-up"></i> CSAT improved 11 points in 6 months</div>
+        <p>Consistent agent training and script adherence are paying off. Maintain weekly feedback calibration sessions.</p>
+      </div>
+      <div class="insight warn">
+        <div class="ititle"><i class="ti ti-alert-triangle"></i> Support stage satisfaction lowest at 54%</div>
+        <p>Customers rate complaint handling poorly. Recommend reducing average hold time and improving empathy training for agents.</p>
+      </div>
+      <div class="insight bad">
+        <div class="ititle"><i class="ti ti-clock"></i> 10% of complaints exceed 24-hour resolution time</div>
+        <p>Escalation delays hurt loyalty scores. Introduce SLA alerts at 4-hour mark to prevent breaches.</p>
+      </div>
+      <div class="insight good">
+        <div class="ititle"><i class="ti ti-message-circle"></i> Chat channel has highest first-contact resolution</div>
+        <p>Chat agents resolve 81% of issues in first contact vs 68% on voice. Consider routing simpler queries to chat.</p>
+      </div>
+      <div class="insight warn">
+        <div class="ititle"><i class="ti ti-receipt"></i> Billing is the top complaint category (28%)</div>
+        <p>Automate billing discrepancy detection before customer contact. Proactive SMS alerts on charge changes may reduce inbound volume.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  Built by Asmitha Nandu Indrapally &nbsp;|&nbsp; Customer Feedback Analysis System &nbsp;|&nbsp; BPO Operations Project
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+  const months = ['Jan','Feb','Mar','Apr','May','Jun'];
+  const csatData = [74,76,79,82,80,85];
+  const voiceData = [120,110,135,115,130,105];
+  const chatData  = [80,95,88,102,91,98];
+  const emailData = [45,50,42,55,48,52];
+
+  let csatChart, catChart, channelChart, resChart;
+
+  function buildCharts() {
+    csatChart = new Chart(document.getElementById('csatChart'), {
+      type: 'line',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'CSAT %', data: csatData, borderColor: '#378ADD', backgroundColor: 'rgba(55,138,221,0.08)', tension: 0.4, pointRadius: 4, pointBackgroundColor: '#378ADD', fill: true },
+          { label: 'Target',  data: [80,80,80,80,80,80], borderColor: '#1D9E75', borderDash: [6,4], pointRadius: 0, borderWidth: 1.5 }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { min: 65, max: 95, ticks: { callback: v => v + '%', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.06)' } },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+        }
+      }
+    });
+
+    catChart = new Chart(document.getElementById('catChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ['Billing','Tech Support','Delivery','Returns','Other'],
+        datasets: [{ data: [28,22,19,16,15], backgroundColor: ['#378ADD','#1D9E75','#BA7517','#E24B4A','#7F77DD'], borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '60%', plugins: { legend: { display: false } } }
+    });
+
+    channelChart = new Chart(document.getElementById('channelChart'), {
+      type: 'bar',
+      data: {
+        labels: months,
+        datasets: [
+          { label: 'Voice', data: voiceData, backgroundColor: '#378ADD' },
+          { label: 'Chat',  data: chatData,  backgroundColor: '#7F77DD' },
+          { label: 'Email', data: emailData, backgroundColor: '#1D9E75' }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 11 } }, grid: { display: false } },
+          y: { stacked: true, ticks: { font: { size: 11 } }, grid: { color: 'rgba(0,0,0,.06)' } }
+        }
+      }
+    });
+
+    resChart = new Chart(document.getElementById('resChart'), {
+      type: 'pie',
+      data: {
+        labels: ['<1 hr','1–4 hr','4–24 hr','>24 hr'],
+        datasets: [{ data: [38,31,21,10], backgroundColor: ['#1D9E75','#378ADD','#BA7517','#E24B4A'], borderWidth: 2, borderColor: '#fff' }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+  }
+
+  function updateCharts() {
+    const m = document.getElementById('monthFilter').value;
+    const labels = m === 'all' ? months : [months[+m]];
+    const slice  = m === 'all' ? csatData : [csatData[+m]];
+    csatChart.data.labels = labels;
+    csatChart.data.datasets[0].data = slice;
+    csatChart.data.datasets[1].data = labels.map(() => 80);
+    csatChart.update();
+  }
+
+  const lcLabels = ['Onboarding','Purchase','Support','Complaint','Retention','Loyalty'];
+  const lcScores = [88,83,71,54,79,91];
+  const lcTips = [
+    'Onboarding satisfaction is strong at 88%. Keep welcome calls brief and informative to maintain high scores.',
+    'Purchase experience rated 83%. Ensure agents confirm order details clearly and offer proactive assistance.',
+    'Support stage at 71% — most room for improvement. Focus on empathy and first-call resolution techniques.',
+    'Complaint handling at 54% — critical gap. Train agents on de-escalation and set clear resolution timelines.',
+    'Retention at 79%. Proactive follow-up calls after complaints boost this stage significantly.',
+    'Loyal customers rate 91%. Identify and reward repeat customers with personalised service.'
+  ];
+
+  function lcClick(i) {
+    alert('Stage: ' + lcLabels[i] + '\nSatisfaction: ' + lcScores[i] + '%\n\nTip: ' + lcTips[i]);
+  }
+
+  buildCharts();
+</script>
+</body>
+</html>
